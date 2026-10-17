@@ -68,4 +68,40 @@ describe("Task API", () => {
     const nextResponse = await request(app).get("/tasks/1");
     expect(nextResponse.status).toBe(404);
   });
+
+  it("should reject an empty task title", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({
+        title: "   ",
+        description: "Test task",
+        priority: "medium",
+      });
+  
+    expect(response.status).toBe(400);
+  });
+
+  it("should not allow changing a task ID through PATCH", async () => {
+    const createResponse = await request(app)
+      .post("/tasks")
+      .send({
+        title: "Original task",
+        priority: "medium",
+      });
+  
+    expect(createResponse.status).toBe(201);
+  
+    const originalId = createResponse.body.id;
+  
+    const patchResponse = await request(app)
+      .patch(`/tasks/${originalId}`)
+      .send({
+        id: "modified-id",
+        title: "Updated task",
+      });
+  
+    expect(patchResponse.status).toBe(200);
+    expect(patchResponse.body.id).toBe(originalId);
+    expect(patchResponse.body.title).toBe("Updated task");
+  });
 });

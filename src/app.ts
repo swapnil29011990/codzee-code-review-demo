@@ -1,5 +1,6 @@
 
 import express, { type Request, type Response } from "express";
+import { z } from "zod";
 import {
   getAllTasks,
   getTaskById,
@@ -7,6 +8,12 @@ import {
   updateTask,
   deleteTask,
 } from "./tasks.js";
+
+const createTaskSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  description: z.string().max(500).optional().default(""),
+  priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
+});
 
 const app = express();
 
@@ -31,13 +38,15 @@ app.get("/tasks/:id", (req: Request, res: Response) => {
 });
 
 app.post("/tasks", (req: Request, res: Response) => {
-  const { title, description = "", priority = "medium" } = req.body;
+  const result = createTaskSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({ error: "Invalid task data" });
+  }
 
   const task = createTask({
-    title,
-    description,
+    ...result.data,
     completed: false,
-    priority,
   });
 
   return res.status(201).json(task);
