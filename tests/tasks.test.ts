@@ -68,4 +68,28 @@ describe("Task API", () => {
     const nextResponse = await request(app).get("/tasks/1");
     expect(nextResponse.status).toBe(404);
   });
+
+  it("should reject an empty task title", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({
+        title: "   ",
+        description: "Test task",
+        priority: "medium",
+      });
+  
+    expect(response.status).toBe(400);
+  });
+
+  it("should reject an invalid task priority", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({
+        title: "Test task",
+        description: "Test description",
+        priority: "urgent",
+      });
+  
+    expect(response.status).toBe(400);
+  });
 });
