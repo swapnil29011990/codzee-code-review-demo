@@ -81,6 +81,42 @@ describe("Task API", () => {
     expect(response.status).toBe(400);
   });
 
+  it("should reject an empty task title", async () => {
+  const response = await request(app)
+    .post("/tasks")
+    .send({
+      title: "   ",
+      description: "Test task",
+      priority: "medium",
+    });
+
+  expect(response.status).toBe(400);
+});
+
+it("should reject an empty task title", async () => {
+  const response = await request(app)
+    .post("/tasks")
+    .send({
+      title: "   ",
+      description: "Test task",
+      priority: "medium",
+    });
+
+  expect(response.status).toBe(400);
+});
+
+it("should reject an invalid task priority", async () => {
+  const response = await request(app)
+    .post("/tasks")
+    .send({
+      title: "Test task",
+      description: "Test description",
+      priority: "urgent",
+    });
+
+  expect(response.status).toBe(400);
+});
+
   it("should not allow changing a task ID through PATCH", async () => {
     const createResponse = await request(app)
       .post("/tasks")
