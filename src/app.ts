@@ -63,8 +63,42 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-app.get("/tasks", (_req: Request, res: Response) => {
-  res.json(getAllTasks());
+app.get("/tasks", (req: Request, res: Response) => {
+  const rawLimit = req.query.limit;
+  const rawOffset = req.query.offset;
+
+  if (
+    (rawLimit !== undefined &&
+      (typeof rawLimit !== "string" ||
+        !/^\d+$/.test(rawLimit))) ||
+    (rawOffset !== undefined &&
+      (typeof rawOffset !== "string" ||
+        !/^\d+$/.test(rawOffset)))
+  ) {
+    return res.status(400).json({
+      error: "Invalid pagination parameters",
+    });
+  }
+
+  const limit = rawLimit === undefined ? undefined : Number(rawLimit);
+  const offset = rawOffset === undefined ? 0 : Number(rawOffset);
+
+  if (
+    (limit !== undefined &&
+      (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)) ||
+    !Number.isSafeInteger(offset)
+  ) {
+    return res.status(400).json({
+      error: "Invalid pagination parameters",
+    });
+  }
+
+  const tasks = getAllTasks().slice(
+    offset,
+    limit === undefined ? undefined : offset + limit,
+  );
+
+  return res.json(tasks);
 });
 
 app.get("/tasks/:id", (req: Request, res: Response) => {

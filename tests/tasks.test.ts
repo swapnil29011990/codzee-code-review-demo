@@ -23,6 +23,32 @@ describe("Task API", () => {
     expect(response.body).toHaveLength(2);
   });
 
+  it("returns every task when limit is omitted", async () => {
+    for (let index = 0; index < 11; index += 1) {
+      await request(app).post("/tasks").send({ title: `Extra ${index}` });
+    }
+
+    const response = await request(app).get("/tasks");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(13);
+    expect(response.body[12].title).toBe("Extra 10");
+  });
+
+  it("returns every task after the offset when limit is omitted", async () => {
+    for (let index = 0; index < 11; index += 1) {
+      await request(app).post("/tasks").send({ title: `Extra ${index}` });
+    }
+
+    const response = await request(app).get("/tasks?offset=1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.map((task: { title: string }) => task.title)).toEqual([
+      "Write API tests",
+      ...Array.from({ length: 11 }, (_, index) => `Extra ${index}`),
+    ]);
+  });
+
   it("returns a task by ID", async () => {
     const response = await request(app).get("/tasks/1");
 
@@ -294,5 +320,44 @@ describe("Task API", () => {
 
     const after = await request(app).get("/tasks/1");
     expect(after.body).toEqual(response.body);
+  });
+
+  it("should return tasks using limit and offset", async () => {
+    await request(app).post("/tasks").send({ title: "Task A" });
+    await request(app).post("/tasks").send({ title: "Task B" });
+    await request(app).post("/tasks").send({ title: "Task C" });
+  
+    const response = await request(app)
+      .get("/tasks?limit=2&offset=1");
+  
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+    expect(response.body.map((task: { title: string }) => task.title))
+      .toEqual(["Write API tests", "Task A"]);
+  });
+
+  it.each([
+    "/tasks?limit=0",
+    "/tasks?limit=-1",
+    "/tasks?limit=101",
+    "/tasks?limit=abc",
+    "/tasks?offset=-1",
+    "/tasks?offset=abc",
+  ])("should reject invalid pagination: %s", async (url) => {
+    const response = await request(app).get(url);
+  
+    expect(response.status).toBe(400);
+    expect(response.body.error)
+      .toBe("Invalid pagination parameters");
+  });
+
+  it("should return an empty array when offset exceeds available tasks", async () => {
+    await request(app).post("/tasks").send({ title: "Task A" });
+  
+    const response = await request(app)
+      .get("/tasks?limit=10&offset=100");
+  
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
   });
 });
