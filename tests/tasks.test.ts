@@ -91,5 +91,14 @@ describe("Task API", () => {
       });
   
     expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Invalid task data");
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "priority",
+          message: expect.any(String),
+        }),
+      ]),
+    );
   });
 });

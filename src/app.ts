@@ -44,7 +44,11 @@ app.post("/tasks", (req: Request, res: Response) => {
 
   if (!result.success) {
     return res.status(400).json({
-      error: "Invalid task data"
+      error: "Invalid task data",
+      issues: result.error.issues.map((issue) => ({
+        path: issue.path.join("."),
+        message: issue.message,
+      })),
     });
   }
 
