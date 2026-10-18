@@ -33,13 +33,12 @@ app.get("/tasks", (req: Request, res: Response) => {
     });
   }
 
-  const limit = rawLimit === undefined ? 10 : Number(rawLimit);
+  const limit = rawLimit === undefined ? undefined : Number(rawLimit);
   const offset = rawOffset === undefined ? 0 : Number(rawOffset);
 
   if (
-    !Number.isSafeInteger(limit) ||
-    limit < 1 ||
-    limit > 100 ||
+    (limit !== undefined &&
+      (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)) ||
     !Number.isSafeInteger(offset)
   ) {
     return res.status(400).json({
@@ -47,7 +46,10 @@ app.get("/tasks", (req: Request, res: Response) => {
     });
   }
 
-  const tasks = getAllTasks().slice(offset, offset + limit);
+  const tasks = getAllTasks().slice(
+    offset,
+    limit === undefined ? undefined : offset + limit,
+  );
 
   return res.json(tasks);
 });

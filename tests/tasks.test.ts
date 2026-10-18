@@ -23,6 +23,18 @@ describe("Task API", () => {
     expect(response.body).toHaveLength(2);
   });
 
+  it("returns every task when limit is omitted", async () => {
+    for (let index = 0; index < 11; index += 1) {
+      await request(app).post("/tasks").send({ title: `Extra ${index}` });
+    }
+
+    const response = await request(app).get("/tasks");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(13);
+    expect(response.body[12].title).toBe("Extra 10");
+  });
+
   it("returns a task by ID", async () => {
     const response = await request(app).get("/tasks/1");
 
