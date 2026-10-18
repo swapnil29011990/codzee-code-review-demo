@@ -127,7 +127,6 @@ describe("Task API", () => {
       .send(["completed"]);
 
     expect(arrayResponse.status).toBe(200);
-    expect(arrayResponse.body.completed).toBe(true);
-    expect(arrayResponse.body).not.toHaveProperty("0");
+    expect(arrayResponse.body).toEqual(response.body);
   });
 });
