@@ -3,8 +3,8 @@ import express, { type Request, type Response } from "express";
 import { z } from "zod";
 
 const createTaskSchema = z.object({
-  title: z.string().trim().min(1).max(100),
-  description: z.string().max(500).optional().default(""),
+  title: z.string().min(1),
+  description: z.string().optional().default(""),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   completed: z.boolean().optional().default(false),
 });

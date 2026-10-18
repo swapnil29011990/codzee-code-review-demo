@@ -82,23 +82,29 @@ describe("Task API", () => {
     );
   });
   
-  it("should reject a title longer than 100 characters", async () => {
+  it("should accept a title longer than 100 characters", async () => {
+    const title = "a".repeat(101);
+
     const response = await request(app)
       .post("/tasks")
-      .send({ title: "a".repeat(101) });
-  
-    expect(response.status).toBe(400);
+      .send({ title });
+
+    expect(response.status).toBe(201);
+    expect(response.body.title).toBe(title);
   });
-  
-  it("should reject a description longer than 500 characters", async () => {
+
+  it("should accept a description longer than 500 characters", async () => {
+    const description = "a".repeat(501);
+
     const response = await request(app)
       .post("/tasks")
       .send({
         title: "Test task",
-        description: "a".repeat(501),
+        description,
       });
-  
-    expect(response.status).toBe(400);
+
+    expect(response.status).toBe(201);
+    expect(response.body.description).toBe(description);
   });
   
   it("should reject a non-boolean completed value", async () => {
@@ -121,13 +127,13 @@ describe("Task API", () => {
     expect(response.status).toBe(400);
   });
 
-  it("should trim the title and apply default values", async () => {
+  it("should keep surrounding spaces in the title and apply default values", async () => {
     const response = await request(app)
       .post("/tasks")
-      .send({ title: "  Test task  " });
-  
+      .send({ title: "  Buy milk " });
+
     expect(response.status).toBe(201);
-    expect(response.body.title).toBe("Test task");
+    expect(response.body.title).toBe("  Buy milk ");
     expect(response.body.description).toBe("");
     expect(response.body.priority).toBe("medium");
   });
