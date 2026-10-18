@@ -69,16 +69,67 @@ describe("Task API", () => {
     expect(nextResponse.status).toBe(404);
   });
 
-  it("should reject an empty task title", async () => {
+  it("should reject a missing title", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({ priority: "medium" });
+  
+    expect(response.status).toBe(400);
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "title" }),
+      ]),
+    );
+  });
+  
+  it("should reject a title longer than 100 characters", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({ title: "a".repeat(101) });
+  
+    expect(response.status).toBe(400);
+  });
+  
+  it("should reject a description longer than 500 characters", async () => {
     const response = await request(app)
       .post("/tasks")
       .send({
-        title: "   ",
-        description: "Test task",
-        priority: "medium",
+        title: "Test task",
+        description: "a".repeat(501),
       });
   
     expect(response.status).toBe(400);
+  });
+  
+  it("should reject a non-boolean completed value", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({
+        title: "Test task",
+        completed: "true",
+      });
+  
+    expect(response.status).toBe(400);
+  });
+  
+  it("should reject a non-object request body", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .set("Content-Type", "application/json")
+      .send('"invalid body"');
+  
+    expect(response.status).toBe(400);
+  });
+
+  it("should trim the title and apply default values", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({ title: "  Test task  " });
+  
+    expect(response.status).toBe(201);
+    expect(response.body.title).toBe("Test task");
+    expect(response.body.description).toBe("");
+    expect(response.body.priority).toBe("medium");
   });
 
   it("should reject an invalid task priority", async () => {
