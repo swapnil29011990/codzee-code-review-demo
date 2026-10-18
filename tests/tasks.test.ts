@@ -136,6 +136,7 @@ describe("Task API", () => {
     expect(response.body.title).toBe("  Buy milk ");
     expect(response.body.description).toBe("");
     expect(response.body.priority).toBe("medium");
+    expect(response.body.completed).toBe(false);
   });
 
   it("should reject an invalid task priority", async () => {
