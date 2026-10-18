@@ -46,17 +46,17 @@ export interface Task {
     return task;
   }
   
-  export function updateTask(
-    id: number,
-    data: Partial<Omit<Task, "id">>,
-  ): Task | undefined {
-    const task = getTaskById(id);
+  export function updateTask(id: number, data: Partial<Task>): Task | undefined {
+    const task = tasks.find((task) => task.id === id);
   
     if (!task) {
       return undefined;
     }
   
-    Object.assign(task, data);
+    const { id: _ignoredId, ...updates } = data;
+  
+    Object.assign(task, updates);
+  
     return task;
   }
   

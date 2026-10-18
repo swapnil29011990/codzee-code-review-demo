@@ -69,3 +69,27 @@ describe("Task API", () => {
     expect(nextResponse.status).toBe(404);
   });
 });
+
+it("should not allow changing a task ID through PATCH", async () => {
+  const createResponse = await request(app)
+    .post("/tasks")
+    .send({
+      title: "Original task",
+      priority: "medium",
+    });
+
+  expect(createResponse.status).toBe(201);
+
+  const originalId = createResponse.body.id;
+
+  const patchResponse = await request(app)
+    .patch(`/tasks/${originalId}`)
+    .send({
+      id: "modified-id",
+      title: "Updated task",
+    });
+
+  expect(patchResponse.status).toBe(200);
+  expect(patchResponse.body.id).toBe(originalId);
+  expect(patchResponse.body.title).toBe("Updated task");
+});
