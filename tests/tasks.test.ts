@@ -35,6 +35,20 @@ describe("Task API", () => {
     expect(response.body[12].title).toBe("Extra 10");
   });
 
+  it("returns every task after the offset when limit is omitted", async () => {
+    for (let index = 0; index < 11; index += 1) {
+      await request(app).post("/tasks").send({ title: `Extra ${index}` });
+    }
+
+    const response = await request(app).get("/tasks?offset=1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.map((task: { title: string }) => task.title)).toEqual([
+      "Write API tests",
+      ...Array.from({ length: 11 }, (_, index) => `Extra ${index}`),
+    ]);
+  });
+
   it("returns a task by ID", async () => {
     const response = await request(app).get("/tasks/1");
 
