@@ -69,6 +69,19 @@ describe("Task API", () => {
     expect(nextResponse.status).toBe(404);
   });
 
+  it("should reject an empty title", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({ title: "" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "title" }),
+      ]),
+    );
+  });
+
   it("should reject a missing title", async () => {
     const response = await request(app)
       .post("/tasks")
@@ -158,5 +171,51 @@ describe("Task API", () => {
         }),
       ]),
     );
+  });
+
+  it("should reject an empty title on PATCH", async () => {
+    const response = await request(app)
+      .patch("/tasks/1")
+      .send({ title: "" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "title" }),
+      ]),
+    );
+
+    const task = await request(app).get("/tasks/1");
+    expect(task.body.title).toBe("Learn TypeScript");
+  });
+
+  it("should reject an invalid priority on PATCH", async () => {
+    const response = await request(app)
+      .patch("/tasks/1")
+      .send({ priority: "urgent" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "priority" }),
+      ]),
+    );
+
+    const task = await request(app).get("/tasks/1");
+    expect(task.body.priority).toBe("high");
+  });
+
+  it("should not overwrite a task id on PATCH", async () => {
+    const response = await request(app)
+      .patch("/tasks/1")
+      .send({ id: 2, title: "Renamed" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(1);
+    expect(response.body.title).toBe("Renamed");
+
+    const other = await request(app).get("/tasks/2");
+    expect(other.body.id).toBe(2);
+    expect(other.body.title).toBe("Write API tests");
   });
 });
