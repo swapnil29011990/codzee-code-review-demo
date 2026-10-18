@@ -68,28 +68,59 @@ describe("Task API", () => {
     const nextResponse = await request(app).get("/tasks/1");
     expect(nextResponse.status).toBe(404);
   });
-});
 
-it("should not allow changing a task ID through PATCH", async () => {
-  const createResponse = await request(app)
-    .post("/tasks")
-    .send({
-      title: "Original task",
-      priority: "medium",
-    });
+  it("should not allow changing a task ID through PATCH", async () => {
+    const createResponse = await request(app)
+      .post("/tasks")
+      .send({
+        title: "Original task",
+        priority: "medium",
+      });
+  
+    expect(createResponse.status).toBe(201);
+  
+    const originalId = createResponse.body.id;
+  
+    const patchResponse = await request(app)
+      .patch(`/tasks/${originalId}`)
+      .send({
+        id: "modified-id",
+        title: "Updated task",
+      });
+  
+    expect(patchResponse.status).toBe(200);
+    expect(patchResponse.body.id).toBe(originalId);
+    expect(patchResponse.body.title).toBe("Updated task");
+  });
+  
+  it("should handle PATCH requests with no body", async () => {
+    const createResponse = await request(app)
+      .post("/tasks")
+      .send({ title: "Original task" });
+  
+    expect(createResponse.status).toBe(201);
+  
+    const task = createResponse.body;
+  
+    const patchResponse = await request(app)
+      .patch(`/tasks/${task.id}`);
+  
+    expect(patchResponse.status).toBe(200);
+    expect(patchResponse.body).toEqual(task);
+  });
 
-  expect(createResponse.status).toBe(201);
+  it("should ignore unknown and invalid fields on PATCH", async () => {
+    const before = await request(app).get("/tasks/1");
 
-  const originalId = createResponse.body.id;
+    const response = await request(app)
+      .patch("/tasks/1")
+      .send({ completed: "yes", priority: "urgent", isAdmin: true });
 
-  const patchResponse = await request(app)
-    .patch(`/tasks/${originalId}`)
-    .send({
-      id: "modified-id",
-      title: "Updated task",
-    });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(before.body);
+    expect(response.body).not.toHaveProperty("isAdmin");
 
-  expect(patchResponse.status).toBe(200);
-  expect(patchResponse.body.id).toBe(originalId);
-  expect(patchResponse.body.title).toBe("Updated task");
+    const after = await request(app).get("/tasks/1");
+    expect(after.body).toEqual(before.body);
+  });
 });

@@ -53,8 +53,29 @@ export interface Task {
       return undefined;
     }
   
-    const { id: _ignoredId, ...updates } = data;
-  
+    const source = data ?? {};
+    const updates: Partial<Omit<Task, "id">> = {};
+
+    if (typeof source.title === "string") {
+      updates.title = source.title;
+    }
+
+    if (typeof source.description === "string") {
+      updates.description = source.description;
+    }
+
+    if (typeof source.completed === "boolean") {
+      updates.completed = source.completed;
+    }
+
+    if (
+      source.priority === "low" ||
+      source.priority === "medium" ||
+      source.priority === "high"
+    ) {
+      updates.priority = source.priority;
+    }
+
     Object.assign(task, updates);
   
     return task;
