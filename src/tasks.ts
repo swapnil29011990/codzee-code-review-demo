@@ -50,13 +50,33 @@ export interface Task {
     id: number,
     data: Partial<Omit<Task, "id">>,
   ): Task | undefined {
-    const task = getTaskById(id);
+    const task = tasks.find((task) => task.id === id);
   
     if (!task) {
       return undefined;
     }
   
-    Object.assign(task, data);
+    const source = data ?? {};
+    const updates: Partial<Omit<Task, "id">> = {};
+
+    if (source.title !== undefined) {
+      updates.title = source.title;
+    }
+
+    if (source.description !== undefined) {
+      updates.description = source.description;
+    }
+
+    if (source.completed !== undefined) {
+      updates.completed = source.completed;
+    }
+
+    if (source.priority !== undefined) {
+      updates.priority = source.priority;
+    }
+
+    Object.assign(task, updates);
+  
     return task;
   }
   

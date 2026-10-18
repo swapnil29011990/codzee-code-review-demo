@@ -218,4 +218,81 @@ describe("Task API", () => {
     expect(other.body.id).toBe(2);
     expect(other.body.title).toBe("Write API tests");
   });
+
+  it("should not allow changing a task ID through PATCH", async () => {
+    const createResponse = await request(app)
+      .post("/tasks")
+      .send({
+        title: "Original task",
+        priority: "medium",
+      });
+
+    expect(createResponse.status).toBe(201);
+
+    const originalId = createResponse.body.id;
+
+    const patchResponse = await request(app)
+      .patch(`/tasks/${originalId}`)
+      .send({
+        id: "modified-id",
+        title: "Updated task",
+      });
+
+    expect(patchResponse.status).toBe(200);
+    expect(patchResponse.body.id).toBe(originalId);
+    expect(patchResponse.body.title).toBe("Updated task");
+  });
+
+  it("should handle PATCH requests with no body", async () => {
+    const createResponse = await request(app)
+      .post("/tasks")
+      .send({ title: "Original task" });
+
+    expect(createResponse.status).toBe(201);
+
+    const task = createResponse.body;
+
+    const patchResponse = await request(app)
+      .patch(`/tasks/${task.id}`);
+
+    expect(patchResponse.status).toBe(200);
+    expect(patchResponse.body).toEqual(task);
+  });
+
+  it("should apply valid PATCH fields, ignore unknown ones, and reject invalid ones", async () => {
+    const before = await request(app).get("/tasks/1");
+
+    const invalid = await request(app)
+      .patch("/tasks/1")
+      .send({ completed: true, extra: 1, priority: "urgent" });
+
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "priority" }),
+      ]),
+    );
+
+    const unchanged = await request(app).get("/tasks/1");
+    expect(unchanged.body).toEqual(before.body);
+
+    const response = await request(app)
+      .patch("/tasks/1")
+      .send({ completed: true, extra: 1 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.completed).toBe(true);
+    expect(response.body.priority).toBe(before.body.priority);
+    expect(response.body.id).toBe(before.body.id);
+    expect(response.body).not.toHaveProperty("extra");
+
+    const arrayResponse = await request(app)
+      .patch("/tasks/1")
+      .send(["completed"]);
+
+    expect(arrayResponse.status).toBe(400);
+
+    const after = await request(app).get("/tasks/1");
+    expect(after.body).toEqual(response.body);
+  });
 });
