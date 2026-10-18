@@ -109,31 +109,25 @@ describe("Task API", () => {
     expect(patchResponse.body).toEqual(task);
   });
 
-  it("should reject invalid PATCH fields", async () => {
+  it("should apply valid PATCH fields and ignore unknown or invalid ones", async () => {
     const before = await request(app).get("/tasks/1");
 
-    const priorityResponse = await request(app)
+    const response = await request(app)
       .patch("/tasks/1")
-      .send({ priority: "urgent" });
+      .send({ completed: true, extra: 1, priority: "urgent" });
 
-    expect(priorityResponse.status).toBe(400);
-    expect(priorityResponse.body.error).toBe("Invalid task data");
+    expect(response.status).toBe(200);
+    expect(response.body.completed).toBe(true);
+    expect(response.body.priority).toBe(before.body.priority);
+    expect(response.body.id).toBe(before.body.id);
+    expect(response.body).not.toHaveProperty("extra");
 
-    const completedResponse = await request(app)
+    const arrayResponse = await request(app)
       .patch("/tasks/1")
-      .send({ completed: "yes" });
+      .send(["completed"]);
 
-    expect(completedResponse.status).toBe(400);
-    expect(completedResponse.body.error).toBe("Invalid task data");
-
-    const unknownResponse = await request(app)
-      .patch("/tasks/1")
-      .send({ completed: true, isAdmin: true });
-
-    expect(unknownResponse.status).toBe(400);
-    expect(unknownResponse.body.error).toBe("Invalid task data");
-
-    const after = await request(app).get("/tasks/1");
-    expect(after.body).toEqual(before.body);
+    expect(arrayResponse.status).toBe(200);
+    expect(arrayResponse.body.completed).toBe(true);
+    expect(arrayResponse.body).not.toHaveProperty("0");
   });
 });
