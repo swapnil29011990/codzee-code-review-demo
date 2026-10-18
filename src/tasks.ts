@@ -46,7 +46,10 @@ export interface Task {
     return task;
   }
   
-  export function updateTask(id: number, data: Partial<Task>): Task | undefined {
+  export function updateTask(
+    id: number,
+    data: Partial<Omit<Task, "id">>,
+  ): Task | undefined {
     const task = tasks.find((task) => task.id === id);
   
     if (!task) {
@@ -56,23 +59,19 @@ export interface Task {
     const source = data ?? {};
     const updates: Partial<Omit<Task, "id">> = {};
 
-    if (typeof source.title === "string") {
+    if (source.title !== undefined) {
       updates.title = source.title;
     }
 
-    if (typeof source.description === "string") {
+    if (source.description !== undefined) {
       updates.description = source.description;
     }
 
-    if (typeof source.completed === "boolean") {
+    if (source.completed !== undefined) {
       updates.completed = source.completed;
     }
 
-    if (
-      source.priority === "low" ||
-      source.priority === "medium" ||
-      source.priority === "high"
-    ) {
+    if (source.priority !== undefined) {
       updates.priority = source.priority;
     }
 
